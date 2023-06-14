@@ -1,22 +1,58 @@
 <script setup lang="ts">
-import { reactive } from "vue";
-import { IAlerta } from "../interfaces/alerta";
+import { TextareaHTMLAttributes, reactive, computed } from "vue";
+
 import Alerta from "../components/Alerta.vue";
 
-defineEmits([""]);
+import { IAlerta } from "../interfaces/alerta";
+
+interface Props {
+  //debido al v-model los props se pasan automáticamente
+  id: string | null;
+  nombre: string;
+  propietario: string;
+  email: string;
+  alta: string;
+  sintomas: string;
+}
+
+const props = defineProps<Props>();
 
 const alerta = reactive<IAlerta>({
   tipo: "",
   mensaje: "",
 });
 
+// update -> el v-model enlaza este nombre por defecto + nombre
+// Hay que definir los emits que envia App.vue, ya que por defecto no están declarados
+const emit = defineEmits([
+  "update:nombre",
+  "update:propietario",
+  "update:email",
+  "update:alta",
+  "update:sintomas",
+  "guardar-paciente", // custom event en <Formulario @guardar-paciente="guardarPaciente"></Formulario>
+]);
+
 const validar = () => {
-  if (Object.values(paciente).includes("")) {
+  if (Object.values(props).includes("")) {
     alerta.mensaje = "Todos los campos son obligatorios";
     alerta.tipo = "ERROR";
     return;
   }
+
+  emit("guardar-paciente"); //Emitir la funcion al padre
+  alerta.mensaje = props.id
+    ? "Paciente actualizado con éxito"
+    : "Paciente guardado con éxito";
+  alerta.tipo = "EXITO";
+
+  setTimeout(() => {
+    alerta.mensaje = "";
+    alerta.tipo = "";
+  }, 3000);
 };
+
+const editando = computed(() => props.id); // Mantener la reactividad
 </script>
 
 <template>
@@ -43,6 +79,10 @@ const validar = () => {
           id="mascota"
           class="w-full p-4 border-2 mt-2 placeholder-gray-400 rounded-md"
           placeholder="Nombre de la mascota"
+          :value="nombre"
+          @input="
+            $emit('update:nombre', ($event.target as HTMLInputElement).value)
+          "
         />
       </div>
       <div class="mb-5">
@@ -54,6 +94,13 @@ const validar = () => {
           id="propietario"
           class="w-full p-4 border-2 mt-2 placeholder-gray-400 rounded-md"
           placeholder="Nombre del propietario"
+          :value="propietario"
+          @input="
+            $emit(
+              'update:propietario',
+              ($event.target as HTMLInputElement).value
+            )
+          "
         />
       </div>
       <div class="mb-5">
@@ -65,6 +112,10 @@ const validar = () => {
           id="email"
           class="w-full p-4 border-2 mt-2 placeholder-gray-400 rounded-md"
           placeholder="Email del propietario"
+          :value="email"
+          @input="
+            $emit('update:email', ($event.target as HTMLInputElement).value)
+          "
         />
       </div>
       <div class="mb-5">
@@ -75,6 +126,10 @@ const validar = () => {
           type="date"
           id="alta"
           class="w-full p-4 border-2 mt-2 placeholder-gray-400 rounded-md"
+          :value="alta"
+          @input="
+            $emit('update:alta', ($event.target as HTMLInputElement).value)
+          "
         />
       </div>
       <div class="mb-5">
@@ -85,12 +140,19 @@ const validar = () => {
           id="sintomas"
           class="w-full p-4 border-2 mt-2 placeholder-gray-400 rounded-md h-40"
           placeholder="Describe los síntomas del paciente"
+          :value="sintomas"
+          @input="
+            $emit(
+              'update:sintomas',
+              ($event.target as TextareaHTMLAttributes).value
+            )
+          "
         />
       </div>
       <input
         type="submit"
         class="bg-indigo-500 w-full p-3 text-white uppercase font-bold hover:bg-indigo-700 cursor-pointer transition-colors"
-        value="Agregar paciente"
+        :value="[editando ? 'Actualizar paciente' : 'Agregar paciente']"
       />
     </form>
   </div>
